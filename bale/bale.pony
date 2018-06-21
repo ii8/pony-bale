@@ -212,6 +212,7 @@ class BaleWriter
       u16(z.u16())
       u32(y)
     else
+      u8(255)
       u64(x)
     end
 
