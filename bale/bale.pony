@@ -1,7 +1,8 @@
 use "buffered"
+use "collections"
 
-interface BaleItem[A: Any #send]
-  fun apply(br: BaleReader): A^
+interface val BaleItem[A: Any #send]
+  fun apply(br: BaleReader): A^ ?
 
 class BaleReader
   let r: Reader
@@ -85,9 +86,9 @@ class BaleReader
 
   fun ref array[A: Any #send](c: BaleItem[A]): Array[A] iso^ ? =>
     var len = uv()?
-    let a = recover iso Array[A](len.usize()) end
+    let a = recover Array[A](len.usize()) end
     while len > 0 do
-      a.push(c(this))
+      a.push(c(this)?)
       len = len - 1
     end
     a
@@ -130,6 +131,16 @@ class BaleReader
 
   fun ref string(): String iso^ ? =>
     String.from_iso_array(block()?)
+
+  fun ref map[A: Any #send](c: BaleItem[A]): Map[String, A] iso^ ? =>
+    var len = uv()?
+    let m = recover Map[String, A] end
+    while len > 0 do
+       let s: String = string()?
+       m.insert(s, c(this)?)?
+       len = len - 1
+    end
+    m
 
   fun done() ? =>
     if r.size() != 0 then

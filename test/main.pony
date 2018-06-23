@@ -1,4 +1,5 @@
 use "ponytest"
+use "collections"
 use "../bale"
 
 actor Main is TestList
@@ -8,6 +9,7 @@ actor Main is TestList
 
   fun tag tests(test: PonyTest) =>
     test(_ReadUV)
+    test(_ReadMap)
     test(_WriteUV)
 
 class iso _ReadUV is UnitTest
@@ -25,6 +27,29 @@ class iso _ReadUV is UnitTest
       end
       h.assert_eq[U64](n, k)
     end
+
+class iso _ReadMap is UnitTest
+  fun name(): String => "read.map"
+
+  fun apply(h: TestHelper) =>
+    h.assert_no_error({() ? =>
+      let r = BaleReader([0x00])
+      let m = r.map[U8]({(r': BaleReader): U8 ? => r'.u8()? })?
+      h.assert_eq[USize](m.size(), 0)
+    })
+
+    h.assert_no_error({() ? =>
+      let r = BaleReader([0x03
+        0x03; 0x6f; 0x6e; 0x65; 0x01
+        0x03; 0x74; 0x77; 0x6f; 0x02
+        0x05; 0x74; 0x68; 0x72; 0x65; 0x65; 0x03])
+
+      let m = r.map[U8]({(r': BaleReader): U8 ? => r'.u8()? })?
+      h.assert_eq[U8](m("one")?, 1)
+      h.assert_eq[U8](m("two")?, 2)
+      h.assert_eq[U8](m("three")?, 3)
+      h.assert_eq[USize](m.size(), 3)
+    })
 
 class iso _WriteUV is UnitTest
   fun name(): String => "write.uv"
