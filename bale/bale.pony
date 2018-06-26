@@ -1,7 +1,7 @@
 use "buffered"
 use "collections"
 
-interface val BaleItem[A: Any #send]
+interface val Bale[A: Any #send]
   fun apply(br: BaleReader): A^ ?
 
 class BaleReader
@@ -84,7 +84,7 @@ class BaleReader
   fun ref union(): U64 ? =>
     uv()?
 
-  fun ref array[A: Any #send](c: BaleItem[A]): Array[A] iso^ ? =>
+  fun ref array[A: Any #send](c: Bale[A]): Array[A] iso^ ? =>
     var len = uv()?
     let a = recover Array[A](len.usize()) end
     while len > 0 do
@@ -122,8 +122,18 @@ class BaleReader
       error
     end
 
-  fun ref maybe(): Bool ? =>
+  fun ref nothing(): Bool ? =>
+    not bool()?
+
+  fun ref just(): Bool ? =>
     bool()?
+
+  fun ref maybe[A: Any #send](c: Bale[A]): (A^ | None) ? =>
+    if just()? then
+      c(this)?
+    else
+      None
+    end
 
   fun ref block(): Array[U8] iso^ ? =>
     let len = uv()?
@@ -132,7 +142,7 @@ class BaleReader
   fun ref string(): String iso^ ? =>
     String.from_iso_array(block()?)
 
-  fun ref map[A: Any #send](c: BaleItem[A]): Map[String, A] iso^ ? =>
+  fun ref map[A: Any #send](c: Bale[A]): Map[String, A] iso^ ? =>
     var len = uv()?
     let m = recover Map[String, A] end
     while len > 0 do
@@ -255,4 +265,10 @@ class BaleWriter
   fun ref string(data: ByteSeq) =>
     uv(data.size().u64())
     w.write(data)
+
+  fun size(): USize =>
+    w.size()
+
+  fun ref done(): Array[ByteSeq] iso^ =>
+    w.done()
 

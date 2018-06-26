@@ -59,7 +59,7 @@ class iso _WriteUV is UnitTest
       let w = BaleWriter
       w.uv(k)
       let a = Array[U8]
-      for bs in w.w.done().values() do
+      for bs in w.done().values() do
         a.append(bs)
       end
       h.assert_array_eq[U8](a, v)
